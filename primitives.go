@@ -1,6 +1,11 @@
 package serializer
 
-import "strconv"
+import (
+	"bytes"
+	"encoding/binary"
+	"errors"
+	"strconv"
+)
 
 // Bytes is a serializable version of a byte slice.
 type Bytes []byte
@@ -24,6 +29,19 @@ func (i Int) SerializerType() string {
 	return "int"
 }
 
+// Float64 is a Serializer for a float64.
+type Float64 float64
+
+func (f Float64) Serialize() ([]byte, error) {
+	var buf bytes.Buffer
+	binary.Write(&buf, binary.LittleEndian, float64(f))
+	return buf.Bytes(), nil
+}
+
+func (f Float64) SerializerType() string {
+	return "float64"
+}
+
 func init() {
 	RegisterDeserializer(Bytes(nil).SerializerType(), func(d []byte) (Serializer, error) {
 		return Bytes(d), nil
@@ -34,5 +52,13 @@ func init() {
 			return nil, err
 		}
 		return Int(num), nil
+	})
+	RegisterDeserializer(Float64(0).SerializerType(), func(d []byte) (Serializer, error) {
+		buf := bytes.NewBuffer(d)
+		var value float64
+		if err := binary.Read(buf, binary.LittleEndian, &value); err != nil {
+			return nil, errors.New("failed to decode float64: " + err.Error())
+		}
+		return Float64(value), nil
 	})
 }
