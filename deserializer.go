@@ -1,6 +1,9 @@
 package serializer
 
-import "sync"
+import (
+	"reflect"
+	"sync"
+)
 
 var deserializersLock sync.RWMutex
 var deserializers = map[string]Deserializer{}
@@ -52,4 +55,33 @@ func RegisterDeserializer(typeID string, d Deserializer) {
 		panic("type ID already in use: " + typeID)
 	}
 	deserializers[typeID] = d
+}
+
+// RegisterTypedDeserializer is like RegisterDeserializer,
+// but instead of taking a Deserializer, it converts a
+// function into a Deserializer by casting its first return
+// value to a Serializer.
+//
+// For instance, you might have a method like this:
+//
+//     func DeserializeMyType(d []byte) (*MyType, error) {
+//         ...
+//     }
+//
+// Technically, DeserializeMyType is not a Deserializer
+// since it doesn't return a Serializer, it returns *MyType.
+// Still, it is clear how it could be turned into a
+// Deserializer, provided that *MyType implements Serializer.
+// The job of RegisterTypedDeserializer is to use a method
+// like DeserializeMyType as a deserializer.
+func RegisterTypedDeserializer(typeID string, f interface{}) {
+	val := reflect.ValueOf(f)
+	RegisterDeserializer(typeID, func(d []byte) (Serializer, error) {
+		res := val.Call([]reflect.Value{reflect.ValueOf(d)})
+		if res[1].IsNil() {
+			return res[0].Interface().(Serializer), nil
+		} else {
+			return nil, res[1].Interface().(error)
+		}
+	})
 }
