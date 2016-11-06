@@ -1,6 +1,7 @@
 package serializer
 
 import (
+	"bytes"
 	"encoding/json"
 	"testing"
 )
@@ -79,5 +80,39 @@ func TestSerializeSlice(t *testing.T) {
 	}
 	if *(slice[3].(*demoType1)) != *(deserialized[3].(*demoType1)) {
 		t.Error("element 3 does not match")
+	}
+}
+
+func TestSerializeAny(t *testing.T) {
+	var obj Int
+	var obj1 interface{}
+
+	obj = 7
+	obj1 = Bytes([]byte("hello"))
+
+	if data, err := SerializeAny(obj, obj1); err != nil {
+		t.Error(err)
+	} else {
+		obj = 3
+		obj1 = "hello"
+		if err := DeserializeAny(data, &obj, &obj1); err != nil {
+			t.Error(err)
+		}
+		if obj != 7 {
+			t.Errorf("expected %d got %d", 7, obj)
+		}
+		if b, ok := obj1.(Bytes); !ok {
+			t.Errorf("expected Bytes got %T", obj1)
+		} else if !bytes.Equal(b, []byte("hello")) {
+			t.Errorf("expected %v got %v", []byte("hello"), b)
+		}
+
+		var obj3 string
+		if err := DeserializeAny(data, &obj, &obj3); err == nil {
+			t.Errorf("expecting error")
+		}
+		if err := DeserializeAny(data, &obj1, &obj); err == nil {
+			t.Errorf("expceting error")
+		}
 	}
 }

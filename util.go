@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
+	"reflect"
 )
 
 var helperByteOrder = binary.LittleEndian
@@ -101,4 +103,47 @@ func DeserializeSlice(d []byte) ([]Serializer, error) {
 	}
 
 	return res, nil
+}
+
+// SerializeAny attempts to serialize the objects.
+// It fails if any of the objects are not Serializers.
+func SerializeAny(obj ...interface{}) ([]byte, error) {
+	s := make([]Serializer, len(obj))
+	for i, x := range obj {
+		var ok bool
+		s[i], ok = x.(Serializer)
+		if !ok {
+			return nil, fmt.Errorf("not a Serializer: %T", x)
+		}
+	}
+	return SerializeSlice(s)
+}
+
+// DeserializeAny attempts to reverse the process done by
+// SerializeAny.
+// It takes pointers to the variables into which the
+// objects should be deserialized.
+func DeserializeAny(data []byte, out ...interface{}) error {
+	slice, err := DeserializeSlice(data)
+	if err != nil {
+		return err
+	}
+	if len(slice) != len(out) {
+		return fmt.Errorf("have %d destinations but %d decoded objects",
+			len(out), len(slice))
+	}
+	for i, obj := range slice {
+		val := reflect.ValueOf(obj)
+		destVal := reflect.ValueOf(out[i])
+		if destVal.Kind() != reflect.Ptr {
+			return fmt.Errorf("element %d: expected pointer but got %T",
+				i, out[i])
+		}
+		if !val.Type().AssignableTo(destVal.Type().Elem()) {
+			return fmt.Errorf("element %d: expecting %s but decoded %T",
+				i, destVal.Type().Elem(), obj)
+		}
+		destVal.Elem().Set(val)
+	}
+	return nil
 }
