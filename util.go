@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"reflect"
 )
 
@@ -146,4 +147,26 @@ func DeserializeAny(data []byte, out ...interface{}) error {
 		destVal.Elem().Set(val)
 	}
 	return nil
+}
+
+// SaveAny writes the given objects to a file.
+// It is like using SerializeAny and writing the results
+// to a file afterward.
+func SaveAny(path string, obj ...interface{}) error {
+	enc, err := SerializeAny(obj...)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(path, enc, 0755)
+}
+
+// LoadAny loads the given objects from a file.
+// It is like using DeserializeAny, but first reading the
+// data from a file.
+func LoadAny(path string, objOut ...interface{}) error {
+	contents, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	return DeserializeAny(contents, objOut...)
 }
