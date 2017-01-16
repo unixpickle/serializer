@@ -58,6 +58,22 @@ func (f Float64Slice) SerializerType() string {
 	return "[]float64"
 }
 
+// A Float32Slice is a Serializer for a []float32.
+type Float32Slice []float32
+
+func (f Float32Slice) Serialize() ([]byte, error) {
+	var w bytes.Buffer
+	binary.Write(&w, binary.LittleEndian, uint64(len(f)))
+	for _, x := range f {
+		binary.Write(&w, binary.LittleEndian, x)
+	}
+	return w.Bytes(), nil
+}
+
+func (f Float32Slice) SerializerType() string {
+	return "[]float32"
+}
+
 func init() {
 	RegisterDeserializer(Bytes(nil).SerializerType(), func(d []byte) (Serializer, error) {
 		return Bytes(d), nil
@@ -84,6 +100,20 @@ func init() {
 			return nil, err
 		}
 		vec := make(Float64Slice, int(size))
+		for i := range vec {
+			if err := binary.Read(reader, binary.LittleEndian, &vec[i]); err != nil {
+				return nil, err
+			}
+		}
+		return vec, nil
+	})
+	RegisterDeserializer(Float32Slice(nil).SerializerType(), func(d []byte) (Serializer, error) {
+		reader := bytes.NewBuffer(d)
+		var size uint64
+		if err := binary.Read(reader, binary.LittleEndian, &size); err != nil {
+			return nil, err
+		}
+		vec := make(Float32Slice, int(size))
 		for i := range vec {
 			if err := binary.Read(reader, binary.LittleEndian, &vec[i]); err != nil {
 				return nil, err
