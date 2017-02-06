@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"reflect"
+
+	"github.com/unixpickle/essentials"
 )
 
 var helperByteOrder = binary.LittleEndian
@@ -23,7 +25,7 @@ var (
 func SerializeWithType(s Serializer) ([]byte, error) {
 	data, err := s.Serialize()
 	if err != nil {
-		return nil, err
+		return nil, essentials.AddCtx("serialize with type", err)
 	}
 	typeData := []byte(s.SerializerType())
 
@@ -38,7 +40,11 @@ func SerializeWithType(s Serializer) ([]byte, error) {
 // DeserializeWithType performs the inverse of
 // SerializeWithType, first decoding the type ID and
 // then using that type ID to decode the object.
-func DeserializeWithType(d []byte) (Serializer, error) {
+func DeserializeWithType(d []byte) (obj Serializer, err error) {
+	defer func() {
+		err = essentials.AddCtx("deserialize with type", err)
+	}()
+
 	if len(d) < 4 {
 		return nil, ErrBufferUnderflow
 	}
@@ -67,7 +73,7 @@ func SerializeSlice(s []Serializer) ([]byte, error) {
 	for _, x := range s {
 		serialized, err := SerializeWithType(x)
 		if err != nil {
-			return nil, err
+			return nil, essentials.AddCtx("serialize slice", err)
 		}
 		binary.Write(&res, helperByteOrder, uint64(len(serialized)))
 		res.Write(serialized)
@@ -77,7 +83,11 @@ func SerializeSlice(s []Serializer) ([]byte, error) {
 }
 
 // DeserializeSlice does the inverse of SerializeSlice.
-func DeserializeSlice(d []byte) ([]Serializer, error) {
+func DeserializeSlice(d []byte) (objs []Serializer, err error) {
+	defer func() {
+		err = essentials.AddCtx("deserialize slice", err)
+	}()
+
 	buf := bytes.NewBuffer(d)
 	var res []Serializer
 
@@ -108,7 +118,10 @@ func DeserializeSlice(d []byte) ([]Serializer, error) {
 
 // SerializeAny attempts to serialize the objects.
 // It fails if any of the objects are not Serializers.
-func SerializeAny(obj ...interface{}) ([]byte, error) {
+func SerializeAny(obj ...interface{}) (data []byte, err error) {
+	defer func() {
+		err = essentials.AddCtx("SerializeAny", err)
+	}()
 	s := make([]Serializer, len(obj))
 	for i, x := range obj {
 		var ok bool
@@ -124,7 +137,10 @@ func SerializeAny(obj ...interface{}) ([]byte, error) {
 // SerializeAny.
 // It takes pointers to the variables into which the
 // objects should be deserialized.
-func DeserializeAny(data []byte, out ...interface{}) error {
+func DeserializeAny(data []byte, out ...interface{}) (err error) {
+	defer func() {
+		err = essentials.AddCtx("DeserializeAny", err)
+	}()
 	slice, err := DeserializeSlice(data)
 	if err != nil {
 		return err
@@ -152,7 +168,10 @@ func DeserializeAny(data []byte, out ...interface{}) error {
 // SaveAny writes the given objects to a file.
 // It is like using SerializeAny and writing the results
 // to a file afterward.
-func SaveAny(path string, obj ...interface{}) error {
+func SaveAny(path string, obj ...interface{}) (err error) {
+	defer func() {
+		err = essentials.AddCtx("SaveAny", err)
+	}()
 	enc, err := SerializeAny(obj...)
 	if err != nil {
 		return err
@@ -163,7 +182,10 @@ func SaveAny(path string, obj ...interface{}) error {
 // LoadAny loads the given objects from a file.
 // It is like using DeserializeAny, but first reading the
 // data from a file.
-func LoadAny(path string, objOut ...interface{}) error {
+func LoadAny(path string, objOut ...interface{}) (err error) {
+	defer func() {
+		err = essentials.AddCtx("LoadAny", err)
+	}()
 	contents, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
