@@ -3,6 +3,7 @@ package serializer
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"testing"
 )
 
@@ -115,4 +116,18 @@ func TestSerializeAny(t *testing.T) {
 			t.Errorf("expceting error")
 		}
 	}
+}
+
+func ExampleSerializeAny() {
+	obj1 := Int(15)
+	obj2 := Float64(3.14)
+	data, _ := SerializeAny(obj1, obj2)
+
+	var out1 Int
+	var out2 Float64
+	DeserializeAny(data, &out1, &out2)
+
+	fmt.Println(out1, out2)
+
+	// Output: 15 3.14
 }
