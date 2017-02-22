@@ -10,6 +10,7 @@ import (
 
 func init() {
 	RegisterTypedDeserializer(Bytes(nil).SerializerType(), DeserializeBytes)
+	RegisterTypedDeserializer(String("").SerializerType(), DeserializeString)
 	RegisterTypedDeserializer(Int(0).SerializerType(), DeserializeInt)
 	RegisterTypedDeserializer(Float64(0).SerializerType(), DeserializeFloat64)
 	RegisterTypedDeserializer(Float32(0).SerializerType(), DeserializeFloat32)
@@ -34,6 +35,25 @@ func (b Bytes) Serialize() ([]byte, error) {
 // Bytes.
 func (b Bytes) SerializerType() string {
 	return "[]byte"
+}
+
+// String is a Serializer wrapper for string.
+type String string
+
+// DeserializeString deserializes a String.
+func DeserializeString(d []byte) (String, error) {
+	return String(d), nil
+}
+
+// Serialize serializes the object.
+func (s String) Serialize() ([]byte, error) {
+	return []byte(s), nil
+}
+
+// SerializerType returns the unique ID used to serialize
+// a String.
+func (s String) SerializerType() string {
+	return "string"
 }
 
 // Int is a Serializer wrapper for an int.
