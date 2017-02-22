@@ -12,6 +12,7 @@ func init() {
 	RegisterTypedDeserializer(Bytes(nil).SerializerType(), DeserializeBytes)
 	RegisterTypedDeserializer(Int(0).SerializerType(), DeserializeInt)
 	RegisterTypedDeserializer(Float64(0).SerializerType(), DeserializeFloat64)
+	RegisterTypedDeserializer(Float32(0).SerializerType(), DeserializeFloat32)
 	RegisterTypedDeserializer(Float64Slice(nil).SerializerType(), DeserializeFloat64Slice)
 	RegisterTypedDeserializer(Float32Slice(nil).SerializerType(), DeserializeFloat32Slice)
 }
@@ -82,6 +83,32 @@ func (f Float64) Serialize() ([]byte, error) {
 // a Float64.
 func (f Float64) SerializerType() string {
 	return "float64"
+}
+
+// Float32 is a Serializer for a float32.
+type Float32 float32
+
+// DeserializeFloat32 deserializes a Float32.
+func DeserializeFloat32(d []byte) (Float32, error) {
+	buf := bytes.NewBuffer(d)
+	var value float32
+	if err := binary.Read(buf, binary.LittleEndian, &value); err != nil {
+		return 0, essentials.AddCtx("deserialize float32", err)
+	}
+	return Float32(value), nil
+}
+
+// Serialize serializes the object.
+func (f Float32) Serialize() ([]byte, error) {
+	var buf bytes.Buffer
+	binary.Write(&buf, binary.LittleEndian, float32(f))
+	return buf.Bytes(), nil
+}
+
+// SerializerType returns the unique ID used to serialize
+// a Float64.
+func (f Float32) SerializerType() string {
+	return "float32"
 }
 
 // A Float64Slice is a Serializer for a []float64.
