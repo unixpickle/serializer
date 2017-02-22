@@ -117,7 +117,19 @@ func DeserializeSlice(d []byte) (objs []Serializer, err error) {
 }
 
 // SerializeAny attempts to serialize the objects.
-// It fails if any of the objects are not Serializers.
+// It fails if any of the objects are neither Serializers
+// nor supported built-in types.
+//
+// Currently, the following built-in types are supported:
+//
+//     string
+//     []byte
+//     int
+//     float64
+//     []float64
+//     float32
+//     []float32
+//
 func SerializeAny(obj ...interface{}) (data []byte, err error) {
 	defer func() {
 		err = essentials.AddCtx("SerializeAny", err)
@@ -127,7 +139,24 @@ func SerializeAny(obj ...interface{}) (data []byte, err error) {
 		var ok bool
 		s[i], ok = x.(Serializer)
 		if !ok {
-			return nil, fmt.Errorf("not a Serializer: %T", x)
+			switch x := x.(type) {
+			case string:
+				s[i] = String(x)
+			case []byte:
+				s[i] = Bytes(x)
+			case int:
+				s[i] = Int(x)
+			case float64:
+				s[i] = Float64(x)
+			case []float64:
+				s[i] = Float64Slice(x)
+			case float32:
+				s[i] = Float32(x)
+			case []float32:
+				s[i] = Float32Slice(x)
+			default:
+				return nil, fmt.Errorf("unsupported type %T", x)
+			}
 		}
 	}
 	return SerializeSlice(s)
@@ -137,6 +166,9 @@ func SerializeAny(obj ...interface{}) (data []byte, err error) {
 // SerializeAny.
 // It takes pointers to the variables into which the
 // objects should be deserialized.
+//
+// If necessary, objects are converted to the desired type
+// (e.g. []byte can be converted to string).
 func DeserializeAny(data []byte, out ...interface{}) (err error) {
 	defer func() {
 		err = essentials.AddCtx("DeserializeAny", err)
@@ -156,11 +188,14 @@ func DeserializeAny(data []byte, out ...interface{}) (err error) {
 			return fmt.Errorf("element %d: expected pointer but got %T",
 				i, out[i])
 		}
-		if !val.Type().AssignableTo(destVal.Type().Elem()) {
+		if val.Type().AssignableTo(destVal.Type().Elem()) {
+			destVal.Elem().Set(val)
+		} else if val.Type().ConvertibleTo(destVal.Type().Elem()) {
+			destVal.Elem().Set(val.Convert(destVal.Type().Elem()))
+		} else {
 			return fmt.Errorf("element %d: expecting %s but decoded %T",
 				i, destVal.Type().Elem(), obj)
 		}
-		destVal.Elem().Set(val)
 	}
 	return nil
 }

@@ -85,7 +85,7 @@ func TestSerializeSlice(t *testing.T) {
 }
 
 func TestSerializeAny(t *testing.T) {
-	var obj Int
+	var obj int
 	var obj1 interface{}
 
 	obj = 7
@@ -108,7 +108,19 @@ func TestSerializeAny(t *testing.T) {
 			t.Errorf("expected %v got %v", []byte("hello"), b)
 		}
 
-		var obj3 string
+		var altInt Int
+		var altBytes string
+		if err := DeserializeAny(data, &altInt, &altBytes); err != nil {
+			t.Error(err)
+		}
+		if altInt != 7 {
+			t.Errorf("expected %d but got %d", 7, altInt)
+		}
+		if altBytes != "hello" {
+			t.Errorf("expected %v but got %v", "hello", altBytes)
+		}
+
+		var obj3 int
 		if err := DeserializeAny(data, &obj, &obj3); err == nil {
 			t.Errorf("expecting error")
 		}
