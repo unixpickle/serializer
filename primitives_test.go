@@ -1,6 +1,7 @@
 package serializer
 
 import (
+	"math/rand"
 	"reflect"
 	"testing"
 )
@@ -40,5 +41,49 @@ func TestPrimitives(t *testing.T) {
 		if !reflect.DeepEqual(x, newObjs[i]) {
 			t.Errorf("object %d: expected %v but got %v", i, x, newObjs[i])
 		}
+	}
+}
+
+func BenchmarkFloat32Serialize(b *testing.B) {
+	buf := make([]float32, 1000000)
+	for i := range buf {
+		buf[i] = rand.Float32()
+	}
+	for i := 0; i < b.N; i++ {
+		Float32Slice(buf).Serialize()
+	}
+}
+
+func BenchmarkFloat32Deserilaize(b *testing.B) {
+	buf := make([]float32, 1000000)
+	for i := range buf {
+		buf[i] = rand.Float32()
+	}
+	data, _ := Float32Slice(buf).Serialize()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		DeserializeFloat32Slice(data)
+	}
+}
+
+func BenchmarkFloat64Serialize(b *testing.B) {
+	buf := make([]float64, 1000000)
+	for i := range buf {
+		buf[i] = rand.Float64()
+	}
+	for i := 0; i < b.N; i++ {
+		Float64Slice(buf).Serialize()
+	}
+}
+
+func BenchmarkFloat64Deserilaize(b *testing.B) {
+	buf := make([]float64, 1000000)
+	for i := range buf {
+		buf[i] = rand.Float64()
+	}
+	data, _ := Float64Slice(buf).Serialize()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		DeserializeFloat64Slice(data)
 	}
 }

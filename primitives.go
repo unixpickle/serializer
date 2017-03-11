@@ -141,11 +141,9 @@ func DeserializeFloat64Slice(d []byte) (Float64Slice, error) {
 	if err := binary.Read(reader, binary.LittleEndian, &size); err != nil {
 		return nil, essentials.AddCtx("deserialize []float64", err)
 	}
-	vec := make(Float64Slice, int(size))
-	for i := range vec {
-		if err := binary.Read(reader, binary.LittleEndian, &vec[i]); err != nil {
-			return nil, essentials.AddCtx("deserialize []float64", err)
-		}
+	vec := make([]float64, int(size))
+	if err := binary.Read(reader, binary.LittleEndian, vec); err != nil {
+		return nil, essentials.AddCtx("deserialize []float64", err)
 	}
 	return vec, nil
 }
@@ -154,9 +152,7 @@ func DeserializeFloat64Slice(d []byte) (Float64Slice, error) {
 func (f Float64Slice) Serialize() ([]byte, error) {
 	var w bytes.Buffer
 	binary.Write(&w, binary.LittleEndian, uint64(len(f)))
-	for _, x := range f {
-		binary.Write(&w, binary.LittleEndian, x)
-	}
+	binary.Write(&w, binary.LittleEndian, []float64(f))
 	return w.Bytes(), nil
 }
 
@@ -176,11 +172,9 @@ func DeserializeFloat32Slice(d []byte) (Float32Slice, error) {
 	if err := binary.Read(reader, binary.LittleEndian, &size); err != nil {
 		return nil, essentials.AddCtx("deserialize []float32", err)
 	}
-	vec := make(Float32Slice, int(size))
-	for i := range vec {
-		if err := binary.Read(reader, binary.LittleEndian, &vec[i]); err != nil {
-			return nil, essentials.AddCtx("deserialize []float32", err)
-		}
+	vec := make([]float32, int(size))
+	if err := binary.Read(reader, binary.LittleEndian, vec); err != nil {
+		return nil, essentials.AddCtx("deserialize []float32", err)
 	}
 	return vec, nil
 }
@@ -189,9 +183,7 @@ func DeserializeFloat32Slice(d []byte) (Float32Slice, error) {
 func (f Float32Slice) Serialize() ([]byte, error) {
 	var w bytes.Buffer
 	binary.Write(&w, binary.LittleEndian, uint64(len(f)))
-	for _, x := range f {
-		binary.Write(&w, binary.LittleEndian, x)
-	}
+	binary.Write(&w, binary.LittleEndian, []float32(f))
 	return w.Bytes(), nil
 }
 
