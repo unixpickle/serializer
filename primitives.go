@@ -3,6 +3,7 @@ package serializer
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"strconv"
 
 	"github.com/unixpickle/essentials"
@@ -16,6 +17,7 @@ func init() {
 	RegisterTypedDeserializer(Float32(0).SerializerType(), DeserializeFloat32)
 	RegisterTypedDeserializer(Float64Slice(nil).SerializerType(), DeserializeFloat64Slice)
 	RegisterTypedDeserializer(Float32Slice(nil).SerializerType(), DeserializeFloat32Slice)
+	RegisterTypedDeserializer(Bool(false).SerializerType(), DeserializeBool)
 }
 
 // Bytes is a Serializer wrapper for []byte.
@@ -191,4 +193,36 @@ func (f Float32Slice) Serialize() ([]byte, error) {
 // a Float32Slice.
 func (f Float32Slice) SerializerType() string {
 	return "[]float32"
+}
+
+// A Bool is a Serializer for a bool.
+type Bool bool
+
+// DeserializeBool deserializes a Bool.
+func DeserializeBool(d []byte) (Bool, error) {
+	if len(d) != 1 {
+		return false, errors.New("deserialize bool: invalid length")
+	}
+	if d[0] == 0 {
+		return false, nil
+	} else if d[0] == 1 {
+		return true, nil
+	} else {
+		return false, errors.New("deserialize bool: invalid value")
+	}
+}
+
+// Serialize serializes the object.
+func (b Bool) Serialize() ([]byte, error) {
+	if b {
+		return []byte{1}, nil
+	} else {
+		return []byte{0}, nil
+	}
+}
+
+// SerializerType returns the unique ID used to serialize
+// a Bool.
+func (b Bool) SerializerType() string {
+	return "bool"
 }

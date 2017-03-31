@@ -129,6 +129,7 @@ func DeserializeSlice(d []byte) (objs []Serializer, err error) {
 //     []float64
 //     float32
 //     []float32
+//     bool
 //
 func SerializeAny(obj ...interface{}) (data []byte, err error) {
 	defer func() {
@@ -154,6 +155,8 @@ func SerializeAny(obj ...interface{}) (data []byte, err error) {
 				s[i] = Float32(x)
 			case []float32:
 				s[i] = Float32Slice(x)
+			case bool:
+				s[i] = Bool(x)
 			default:
 				return nil, fmt.Errorf("unsupported type %T", x)
 			}

@@ -18,6 +18,8 @@ func TestPrimitives(t *testing.T) {
 		Float64Slice([]float64{}),
 		Float32Slice([]float32{}),
 		String("hello, world"),
+		Bool(true),
+		Bool(false),
 	}
 	data, err := SerializeAny(objects...)
 	if err != nil {
@@ -30,13 +32,14 @@ func TestPrimitives(t *testing.T) {
 	var obj6, obj8 Float64Slice
 	var obj7, obj9 Float32Slice
 	var obj10 String
+	var obj11, obj12 Bool
 	err = DeserializeAny(data, &obj1, &obj2, &obj3, &obj4, &obj5, &obj6, &obj7, &obj8,
-		&obj9, &obj10)
+		&obj9, &obj10, &obj11, &obj12)
 	if err != nil {
 		t.Fatal(err)
 	}
 	newObjs := []interface{}{obj1, obj2, obj3, obj4, obj5, obj6, obj7, obj8,
-		obj9, obj10}
+		obj9, obj10, obj11, obj12}
 	for i, x := range objects {
 		if !reflect.DeepEqual(x, newObjs[i]) {
 			t.Errorf("object %d: expected %v but got %v", i, x, newObjs[i])
