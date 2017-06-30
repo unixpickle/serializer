@@ -125,6 +125,7 @@ func DeserializeSlice(d []byte) (objs []Serializer, err error) {
 //     string
 //     []byte
 //     int
+//     []int
 //     float64
 //     []float64
 //     float32
@@ -147,6 +148,8 @@ func SerializeAny(obj ...interface{}) (data []byte, err error) {
 				s[i] = Bytes(x)
 			case int:
 				s[i] = Int(x)
+			case []int:
+				s[i] = IntSlice(x)
 			case float64:
 				s[i] = Float64(x)
 			case []float64:

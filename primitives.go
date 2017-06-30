@@ -13,6 +13,7 @@ func init() {
 	RegisterTypedDeserializer(Bytes(nil).SerializerType(), DeserializeBytes)
 	RegisterTypedDeserializer(String("").SerializerType(), DeserializeString)
 	RegisterTypedDeserializer(Int(0).SerializerType(), DeserializeInt)
+	RegisterTypedDeserializer(IntSlice(nil).SerializerType(), DeserializeIntSlice)
 	RegisterTypedDeserializer(Float64(0).SerializerType(), DeserializeFloat64)
 	RegisterTypedDeserializer(Float32(0).SerializerType(), DeserializeFloat32)
 	RegisterTypedDeserializer(Float64Slice(nil).SerializerType(), DeserializeFloat64Slice)
@@ -79,6 +80,50 @@ func (i Int) Serialize() ([]byte, error) {
 // an Int.
 func (i Int) SerializerType() string {
 	return "int"
+}
+
+// IntSlice is a Serializer wrapper for an []int.
+type IntSlice []int
+
+// DeserializeIntSlice deserializes an IntSlice.
+func DeserializeIntSlice(d []byte) (slice IntSlice, err error) {
+	defer essentials.AddCtxTo("deserialize IntSlice", &err)
+
+	reader := bytes.NewBuffer(d)
+
+	var size uint64
+	if err := binary.Read(reader, binary.LittleEndian, &size); err != nil {
+		return nil, err
+	}
+	vec := make([]int64, int(size))
+	if err := binary.Read(reader, binary.LittleEndian, vec); err != nil {
+		return nil, err
+	}
+
+	res := make([]int, len(vec))
+	for i, x := range vec {
+		res[i] = int(x)
+	}
+
+	return res, nil
+}
+
+// Serialize serializes the object.
+func (i IntSlice) Serialize() ([]byte, error) {
+	ints64 := make([]int64, len(i))
+	for j, x := range i {
+		ints64[j] = int64(x)
+	}
+	var w bytes.Buffer
+	binary.Write(&w, binary.LittleEndian, uint64(len(i)))
+	binary.Write(&w, binary.LittleEndian, ints64)
+	return w.Bytes(), nil
+}
+
+// SerializerType returns the unique ID used to serialize
+// an IntSlice.
+func (i IntSlice) SerializerType() string {
+	return "[]int"
 }
 
 // Float64 is a Serializer for a float64.

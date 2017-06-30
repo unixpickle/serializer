@@ -20,6 +20,7 @@ func TestPrimitives(t *testing.T) {
 		String("hello, world"),
 		Bool(true),
 		Bool(false),
+		IntSlice([]int{1, 2, 3}),
 	}
 	data, err := SerializeAny(objects...)
 	if err != nil {
@@ -33,13 +34,14 @@ func TestPrimitives(t *testing.T) {
 	var obj7, obj9 Float32Slice
 	var obj10 String
 	var obj11, obj12 Bool
+	var obj13 IntSlice
 	err = DeserializeAny(data, &obj1, &obj2, &obj3, &obj4, &obj5, &obj6, &obj7, &obj8,
-		&obj9, &obj10, &obj11, &obj12)
+		&obj9, &obj10, &obj11, &obj12, &obj13)
 	if err != nil {
 		t.Fatal(err)
 	}
 	newObjs := []interface{}{obj1, obj2, obj3, obj4, obj5, obj6, obj7, obj8,
-		obj9, obj10, obj11, obj12}
+		obj9, obj10, obj11, obj12, obj13}
 	for i, x := range objects {
 		if !reflect.DeepEqual(x, newObjs[i]) {
 			t.Errorf("object %d: expected %v but got %v", i, x, newObjs[i])
@@ -88,5 +90,27 @@ func BenchmarkFloat64Deserilaize(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		DeserializeFloat64Slice(data)
+	}
+}
+
+func BenchmarkIntSerialize(b *testing.B) {
+	buf := make([]int, 1000000)
+	for i := range buf {
+		buf[i] = rand.Int()
+	}
+	for i := 0; i < b.N; i++ {
+		IntSlice(buf).Serialize()
+	}
+}
+
+func BenchmarkIntDeserialize(b *testing.B) {
+	buf := make([]int, 1000000)
+	for i := range buf {
+		buf[i] = rand.Int()
+	}
+	data, _ := IntSlice(buf).Serialize()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		DeserializeIntSlice(data)
 	}
 }
