@@ -14,6 +14,10 @@ func init() {
 	RegisterTypedDeserializer(String("").SerializerType(), DeserializeString)
 	RegisterTypedDeserializer(Int(0).SerializerType(), DeserializeInt)
 	RegisterTypedDeserializer(IntSlice(nil).SerializerType(), DeserializeIntSlice)
+	RegisterTypedDeserializer(Int64(0).SerializerType(), DeserializeInt64)
+	RegisterTypedDeserializer(Int32(0).SerializerType(), DeserializeInt32)
+	RegisterTypedDeserializer(Int64Slice(nil).SerializerType(), DeserializeInt64Slice)
+	RegisterTypedDeserializer(Int32Slice(nil).SerializerType(), DeserializeInt32Slice)
 	RegisterTypedDeserializer(Float64(0).SerializerType(), DeserializeFloat64)
 	RegisterTypedDeserializer(Float32(0).SerializerType(), DeserializeFloat32)
 	RegisterTypedDeserializer(Float64Slice(nil).SerializerType(), DeserializeFloat64Slice)
@@ -124,6 +128,120 @@ func (i IntSlice) Serialize() ([]byte, error) {
 // an IntSlice.
 func (i IntSlice) SerializerType() string {
 	return "[]int"
+}
+
+// Int64 is a Serializer for a int64.
+type Int64 int64
+
+// DeserializeInt64 deserializes a Int64.
+func DeserializeInt64(d []byte) (Int64, error) {
+	buf := bytes.NewBuffer(d)
+	var value int64
+	if err := binary.Read(buf, binary.LittleEndian, &value); err != nil {
+		return 0, essentials.AddCtx("deserialize int64", err)
+	}
+	return Int64(value), nil
+}
+
+// Serialize serializes the object.
+func (i Int64) Serialize() ([]byte, error) {
+	var buf bytes.Buffer
+	binary.Write(&buf, binary.LittleEndian, int64(i))
+	return buf.Bytes(), nil
+}
+
+// SerializerType returns the unique ID used to serialize
+// a Int64.
+func (i Int64) SerializerType() string {
+	return "int64"
+}
+
+// Int32 is a Serializer for a int32.
+type Int32 int32
+
+// DeserializeInt32 deserializes a Int32.
+func DeserializeInt32(d []byte) (Int32, error) {
+	buf := bytes.NewBuffer(d)
+	var value int32
+	if err := binary.Read(buf, binary.LittleEndian, &value); err != nil {
+		return 0, essentials.AddCtx("deserialize int32", err)
+	}
+	return Int32(value), nil
+}
+
+// Serialize serializes the object.
+func (i Int32) Serialize() ([]byte, error) {
+	var buf bytes.Buffer
+	binary.Write(&buf, binary.LittleEndian, int32(i))
+	return buf.Bytes(), nil
+}
+
+// SerializerType returns the unique ID used to serialize
+// a Int64.
+func (i Int32) SerializerType() string {
+	return "int32"
+}
+
+// A Int64Slice is a Serializer for a []int64.
+type Int64Slice []int64
+
+// DeserializeInt64Slice deserializes a Int64Slice.
+func DeserializeInt64Slice(d []byte) (Int64Slice, error) {
+	reader := bytes.NewBuffer(d)
+	var size uint64
+	if err := binary.Read(reader, binary.LittleEndian, &size); err != nil {
+		return nil, essentials.AddCtx("deserialize []int64", err)
+	}
+	vec := make([]int64, int(size))
+	if err := binary.Read(reader, binary.LittleEndian, vec); err != nil {
+		return nil, essentials.AddCtx("deserialize []int64", err)
+	}
+	return vec, nil
+}
+
+// Serialize serializes the object.
+func (i Int64Slice) Serialize() ([]byte, error) {
+	var w bytes.Buffer
+	binary.Write(&w, binary.LittleEndian, uint64(len(i)))
+	binary.Write(&w, binary.LittleEndian, []int64(i))
+	return w.Bytes(), nil
+}
+
+// SerializerType returns the unique ID used to serialize
+// a Int64Slice.
+func (i Int64Slice) SerializerType() string {
+	return "[]int64"
+}
+
+// A Int32Slice is a Serializer for a []int32.
+type Int32Slice []int32
+
+// DeserializeInt32Slice deserializes a Int32Slice.
+func DeserializeInt32Slice(d []byte) (Int32Slice, error) {
+	reader := bytes.NewBuffer(d)
+	var size uint64
+	if err := binary.Read(reader, binary.LittleEndian, &size); err != nil {
+		return nil, essentials.AddCtx("deserialize []int32", err)
+	}
+	vec := make([]int32, int(size))
+	if err := binary.Read(reader, binary.LittleEndian, vec); err != nil {
+		return nil, essentials.AddCtx("deserialize []int32", err)
+	}
+	return vec, nil
+}
+
+// Serialize serializes the object.
+func (i Int32Slice) Serialize() ([]byte, error) {
+	var w bytes.Buffer
+	binary.Write(&w, binary.LittleEndian, uint64(len(i)))
+	binary.Write(&w, binary.LittleEndian, []int32(i))
+	return w.Bytes(), nil
+}
+
+// SerializerType returns the unique ID used to serialize
+// a Int32Slice.
+func (i Int32Slice) SerializerType() string {
+	return "[]int32"
 }
 
 // Float64 is a Serializer for a float64.
