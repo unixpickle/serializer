@@ -18,6 +18,16 @@ var (
 	ErrResidualData    = errors.New("residual data")
 )
 
+func init() {
+	RegisterDeserializer(slice(nil).SerializerType(), func(d []byte) (Serializer, error) {
+		res, err := DeserializeSlice(d)
+		if err != nil {
+			return nil, err
+		}
+		return slice(res), nil
+	})
+}
+
 // SerializeWithType returns a binary value that
 // includes both the type and serialized data for
 // the given Serializer.
@@ -135,6 +145,7 @@ func DeserializeSlice(d []byte) (objs []Serializer, err error) {
 //     float32
 //     []float32
 //     bool
+//     []Serializer
 //
 func SerializeAny(obj ...interface{}) (data []byte, err error) {
 	defer func() {
@@ -172,6 +183,8 @@ func SerializeAny(obj ...interface{}) (data []byte, err error) {
 				s[i] = Float32Slice(x)
 			case bool:
 				s[i] = Bool(x)
+			case []Serializer:
+				s[i] = slice(x)
 			default:
 				return nil, fmt.Errorf("unsupported type %T", x)
 			}
@@ -244,4 +257,14 @@ func LoadAny(path string, objOut ...interface{}) (err error) {
 		return err
 	}
 	return DeserializeAny(contents, objOut...)
+}
+
+type slice []Serializer
+
+func (s slice) Serialize() ([]byte, error) {
+	return SerializeSlice(s)
+}
+
+func (s slice) SerializerType() string {
+	return "[]Serializer"
 }

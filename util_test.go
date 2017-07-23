@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -126,6 +127,23 @@ func TestSerializeAny(t *testing.T) {
 		}
 		if err := DeserializeAny(data, &obj1, &obj); err == nil {
 			t.Errorf("expceting error")
+		}
+	}
+
+	subSlice := []Serializer{Int(3), Bool(true)}
+	if data, err := SerializeAny(subSlice, Bool(false)); err != nil {
+		t.Error(err)
+	} else {
+		var outSlice []Serializer
+		var outBool bool
+		if err := DeserializeAny(data, &outSlice, &outBool); err != nil {
+			t.Error(err)
+		}
+		if !reflect.DeepEqual(outSlice[0:2:2], subSlice[0:2:2]) {
+			t.Errorf("expected %v but got %v", subSlice, outSlice)
+		}
+		if outBool {
+			t.Error("expected false but got true")
 		}
 	}
 }
